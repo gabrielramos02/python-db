@@ -1,0 +1,6 @@
+fastapi
+odmantic
+passlib
+python-jose
+uvicorn
+python-multipart
