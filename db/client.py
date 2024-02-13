@@ -1,4 +1,7 @@
-from odmantic import AIOEngine, Model, ObjectId
+from odmantic import AIOEngine
+from motor.motor_asyncio import AsyncIOMotorClient
 
-db_client = AIOEngine()
+client = AsyncIOMotorClient("mongodb://localhost:27017/")
+
+db_client = AIOEngine(client=client,database="test")
 
