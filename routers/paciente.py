@@ -19,7 +19,9 @@ async def all_pacientes(user: User = Depends(check_auth)):
     return pacientes
 
 
-@router.put("/{id}",)
+@router.put(
+    "/{id}",
+)
 async def eliminar(id: str, user_auth: User = Depends(check_auth)):
     if user_auth.role == "recepcionista":
         raise HTTPException(
@@ -32,15 +34,20 @@ async def eliminar(id: str, user_auth: User = Depends(check_auth)):
     await db_client.save(paciente)
     return paciente
 
+
 @router.post("/")
 async def add_paciente(paciente: Paciente, user_auth: User = Depends(check_auth)):
     if user_auth.role == "medico":
-         raise HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente_db = await db_client.find_one(Paciente, (Paciente.historia_clinica == paciente.historia_clinica) & (Paciente.enabled == True))
+    paciente_db = await db_client.find_one(
+        Paciente,
+        (Paciente.historia_clinica == paciente.historia_clinica)
+        & (Paciente.enabled == True),
+    )
     if paciente_db != None:
-        if not(paciente_db.enabled):
+        if not (paciente_db.enabled):
             paciente_db.enabled == True
             await db_client.save(paciente_db)
             return paciente_db
@@ -49,3 +56,22 @@ async def add_paciente(paciente: Paciente, user_auth: User = Depends(check_auth)
         )
     await db_client.save(paciente)
     return paciente
+
+
+@router.get("/{historia_clinica}")
+async def get_paciente(historia_clinica: str, user_auth: User = Depends(check_auth)):
+    if user_auth.role == "recepcionista":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+    paciente_db = await db_client.find_one(
+        Paciente,
+        (Paciente.historia_clinica == historia_clinica)
+        & (Paciente.enabled == True),
+    )
+    if paciente_db != None:
+        return paciente_db
+    raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No existe ningun paciente con esa historia clinica"
+        )
+    
