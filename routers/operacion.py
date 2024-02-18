@@ -65,3 +65,45 @@ async def user_operaciones(user: User = Depends(check_auth)):
         if user_new == user:
             operaciones_user.append(operacion)
     return operaciones_user
+
+
+@router.post("/operacionrealizada/{id_operacion}")
+async def operacionDone(
+    id_operacion: str,
+    tiempo_real: dict,
+    descripcion: dict,
+    user: User = Depends(check_auth),
+):
+    if user.role == "recepcionista":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+
+    solicitud_operacion_db = await db_client.find_one(
+        Solicitud_Operacion, Solicitud_Operacion.id == ObjectId(id_operacion)
+    )
+    if solicitud_operacion_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="La soliciud no existe"
+        )
+
+    operacion_realizada_db = Operacion_Realizada(
+        id=solicitud_operacion_db.id,
+        clasificacion=solicitud_operacion_db.clasificacion,
+        fecha_solicitud=solicitud_operacion_db.fecha_solicitud,
+        tiempo_duracion_estimado=solicitud_operacion_db.tiempo_duracion_estimado,
+        encargado=solicitud_operacion_db.encargado,
+        paciente=solicitud_operacion_db.paciente,
+        tiempo_duracion_real=tiempo_real,
+        descripcion=descripcion,
+    )
+    return operacion_realizada_db
+
+
+@router.get("/{id_paciente}")
+async def get_operacion(idpaciente: str, user: User = Depends(check_auth)):
+    if user.role == "recepcionista":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+    operacion_db = await db_client.find_one(Solicitud_Operacion,Solicitud_Operacion.id==ObjectId(idpaciente))
