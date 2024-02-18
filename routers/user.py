@@ -34,9 +34,9 @@ async def all_users(user: User = Depends(check_auth)):
     return users
 
 
-@router.put("/{id}")
-async def desactivar_user(id: str,user: User = Depends(check_auth)):
-    user = await db_client.find_one(User, (User.id == ObjectId(id)) & (User.enabled == True))
+@router.put("/{username}")
+async def desactivar_user(username: str,user: User = Depends(check_auth)):
+    user = await db_client.find_one(User, (User.username == username) & (User.enabled == True))
     if user == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     user.enabled = False   
