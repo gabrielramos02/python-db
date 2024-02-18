@@ -33,7 +33,7 @@ async def add_operacion(
         Solicitud_Operacion,
         Solicitud_Operacion.fecha_solicitud == operacion.fecha_solicitud,
     )
-    print(await db_client.find(Solicitud_Operacion))
+
     if operacion_db != None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="La operacion ya existe"
@@ -67,6 +67,7 @@ async def user_operaciones(user: User = Depends(check_auth)):
     return operaciones_user
 
 
+# TODO: fix parametros
 @router.post("/operacionrealizada/{id_operacion}")
 async def operacionDone(
     id_operacion: str,
@@ -106,4 +107,42 @@ async def get_operacion(idpaciente: str, user: User = Depends(check_auth)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    operacion_db = await db_client.find_one(Solicitud_Operacion,Solicitud_Operacion.id==ObjectId(idpaciente))
+    operacion_db = await db_client.find_one(
+        Solicitud_Operacion, Solicitud_Operacion.id == ObjectId(idpaciente)
+    )
+
+
+@router.post("/urgencia")
+async def operacion_urgencia(
+    operacion: Operacion, paciente_form: Paciente, user: User = Depends(check_auth)
+):
+    if user.role == "recepcionista":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+
+    paciente = await db_client.find_one(
+        Paciente,
+        (Paciente.name == paciente_form.name)
+        & (Paciente.surname == paciente_form.surname),
+    )
+
+    if paciente != None:
+        if not (paciente.enabled):
+            paciente.enabled == True
+            await db_client.save(paciente)
+    else:
+        paciente = Paciente(
+            name=paciente_form.name, surname=paciente_form.surname
+        )
+        await db_client.save(paciente)
+
+    operacion_urgente = Solicitud_Operacion(
+        clasificacion=operacion.clasificacion,
+        fecha_solicitud=operacion.fecha_solicitud,
+        tiempo_duracion_estimado=operacion.tiempo_duracion_estimado,
+        encargado=user,
+        paciente=paciente,
+    )
+    await db_client.save(operacion_urgente)
+    return operacion_urgente
