@@ -15,7 +15,7 @@ oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 async def check_auth(token: str = Depends(oauth2)):
     try:
         decoded = jwt.decode(token=token, key=SECRET, algorithms=ALGORITHM)
-        if id == None:
+        if decoded.get("sub") == None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Credenciales de autenticación inválidas",
