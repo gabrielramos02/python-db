@@ -20,16 +20,16 @@ async def all_pacientes(user: User = Depends(check_auth)):
 
 
 @router.put(
-    "/{id}",
+    "/busqueda/{historia_clinica}",
 )
-async def eliminar(id: str, user_auth: User = Depends(check_auth)):
+async def eliminar(historia_clinica: str, user_auth: User = Depends(check_auth)):
     if user_auth.role == "recepcionista":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente = await db_client.find_one(Paciente, Paciente.id == ObjectId(id))
+    paciente = await db_client.find_one(Paciente, Paciente.historia_clinica == historia_clinica)
     if paciente == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No existe paciente con esa historia clinica")
     paciente.enabled = False
     await db_client.save(paciente)
     return paciente
@@ -57,8 +57,7 @@ async def add_paciente(paciente: Paciente, user_auth: User = Depends(check_auth)
     await db_client.save(paciente)
     return paciente
 
-
-@router.get("/{historia_clinica}")
+@router.get("/busqueda/{historia_clinica}")
 async def get_paciente(historia_clinica: str, user_auth: User = Depends(check_auth)):
     if user_auth.role == "recepcionista":
         raise HTTPException(

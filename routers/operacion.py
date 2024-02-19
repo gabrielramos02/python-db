@@ -101,7 +101,7 @@ async def operacionDone(
     return operacion_realizada_db
 
 
-@router.get("/{id_paciente}")
+@router.get("/busqueda/{id_paciente}")
 async def get_operacion(idpaciente: str, user: User = Depends(check_auth)):
     if user.role == "recepcionista":
         raise HTTPException(
