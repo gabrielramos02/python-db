@@ -33,7 +33,7 @@ async def add_operacion(
         Solicitud_Operacion,
         Solicitud_Operacion.fecha_solicitud == operacion.fecha_solicitud,
     )
-
+    
     if operacion_db != None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="La operacion ya existe"
