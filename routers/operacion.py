@@ -21,9 +21,9 @@ async def all_operaciones(user: User = Depends(check_auth)):
     return operaciones
 
 
-@router.post("/")
+@router.post("/addoperacion/{id_paciente}")
 async def add_operacion(
-    operacion: Operacion, id_paciente: ObjectId, user: User = Depends(check_auth)
+    operacion: Operacion, id_paciente: str, user: User = Depends(check_auth)
 ):
     if user.role == "recepcionista":
         raise HTTPException(
