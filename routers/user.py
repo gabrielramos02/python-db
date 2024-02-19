@@ -34,15 +34,28 @@ async def all_users(user: User = Depends(check_auth)):
     return users
 
 
-@router.put("/{id}")
-async def desactivar_user(id: str,user: User = Depends(check_auth)):
-    user = await db_client.find_one(User, (User.id == ObjectId(id)) & (User.enabled == True))
+@router.put("/desactivar/{username}")
+async def desactivar_user(username: str,user: User = Depends(check_auth)):
+    if user.role != "director":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario no autorizado")
+    user = await db_client.find_one(User, (User.username == username) & (User.enabled == True))
     if user == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Usuario no encontrado")
     user.enabled = False   
     await db_client.save(user)
-    raise HTTPException(status_code=status.HTTP_202_ACCEPTED)
+    return user
 
 @router.get("/me")
 async def user(user: User = Depends(check_auth)):
     return user
+
+@router.put("/changepassword")
+async def change_password(user: User,user_auth: User = Depends(check_auth)):
+    if user_auth.role != "director":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario no autorizado")
+    user_db = await db_client.find_one(User, (User.username == user.username) & (User.enabled == True))
+    if user_db == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    user_db.password = crypth.encrypt(user.password)   
+    await db_client.save(user_db)
+    return password_free(user_db)
