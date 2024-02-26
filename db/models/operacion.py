@@ -21,8 +21,9 @@ class Solicitud_Operacion(Model):
 class Operacion_Realizada(Model):
     clasificacion: str
     fecha_solicitud: str = str(datetime.now())
+    fecha_realizada: str = str(datetime.now())
     tiempo_duracion_estimado: str
     encargado: User = Reference(key_name="id_encargado")
     paciente: Paciente = Reference(key_name="id_paciente")
-    tiempo_duracion_real: time
+    tiempo_duracion_real: str
     descripcion: str

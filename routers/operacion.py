@@ -29,9 +29,10 @@ async def add_operacion(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
+    paciente = await db_client.find_one(Paciente,Paciente.id ==ObjectId(id_paciente))
     operacion_db = await db_client.find_one(
         Solicitud_Operacion,
-        Solicitud_Operacion.fecha_solicitud == operacion.fecha_solicitud,
+        Solicitud_Operacion.paciente==paciente.id,
     )
     
     if operacion_db != None:
@@ -71,8 +72,8 @@ async def user_operaciones(user: User = Depends(check_auth)):
 @router.post("/operacionrealizada/{id_operacion}")
 async def operacionDone(
     id_operacion: str,
-    tiempo_real: dict,
-    descripcion: dict,
+    tiempo_real: str,
+    descripcion: str,
     user: User = Depends(check_auth),
 ):
     if user.role == "recepcionista":
@@ -98,6 +99,8 @@ async def operacionDone(
         tiempo_duracion_real=tiempo_real,
         descripcion=descripcion,
     )
+    await db_client.remove(solicitud_operacion_db)
+    await db_client.save(operacion_realizada_db)
     return operacion_realizada_db
 
 

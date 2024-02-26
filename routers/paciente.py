@@ -3,6 +3,7 @@ from middleware.check_auth import check_auth
 from main import db_client, User
 from odmantic import ObjectId
 from db.models.paciente import Paciente
+from db.models.operacion import Solicitud_Operacion
 
 router = APIRouter(prefix="/paciente", tags=["paciente"])
 
@@ -32,6 +33,7 @@ async def eliminar(historia_clinica: str, user_auth: User = Depends(check_auth))
     if paciente == None or not(paciente.enabled):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No existe paciente con esa historia clinica")
     paciente.enabled = False
+    await db_client.remove(Solicitud_Operacion, Solicitud_Operacion.paciente == paciente.id)
     await db_client.save(paciente)
     return paciente
 
