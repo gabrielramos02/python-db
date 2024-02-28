@@ -29,12 +29,12 @@ async def add_operacion(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente = await db_client.find_one(Paciente,Paciente.id ==ObjectId(id_paciente))
+    paciente = await db_client.find_one(Paciente, Paciente.id == ObjectId(id_paciente))
     operacion_db = await db_client.find_one(
         Solicitud_Operacion,
-        Solicitud_Operacion.paciente==paciente.id,
+        Solicitud_Operacion.paciente == paciente.id,
     )
-    
+
     if operacion_db != None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="La operacion ya existe"
@@ -68,7 +68,6 @@ async def user_operaciones(user: User = Depends(check_auth)):
     return operaciones_user
 
 
-# TODO: fix parametros
 @router.post("/operacionrealizada/{id_operacion}")
 async def operacionDone(
     id_operacion: str,
@@ -135,9 +134,7 @@ async def operacion_urgencia(
             paciente.enabled == True
             await db_client.save(paciente)
     else:
-        paciente = Paciente(
-            name=paciente_form.name, surname=paciente_form.surname
-        )
+        paciente = Paciente(name=paciente_form.name, surname=paciente_form.surname)
         await db_client.save(paciente)
 
     operacion_urgente = Solicitud_Operacion(
