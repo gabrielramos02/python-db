@@ -76,4 +76,3 @@ async def get_paciente(historia_clinica: str, user_auth: User = Depends(check_au
     raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="No existe ningun paciente con esa historia clinica"
         )
-    
