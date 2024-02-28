@@ -5,6 +5,7 @@ from db.models.operacion import Operacion, Solicitud_Operacion, Operacion_Realiz
 from db.models.paciente import Paciente
 from odmantic import ObjectId, Model
 from db.schemas.password_free_models import password_free
+from datetime import datetime, date, time
 
 router = APIRouter(prefix="/operacion", tags=["operacion"])
 
@@ -29,11 +30,12 @@ async def add_operacion(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
+    paciente = await db_client.find_one(Paciente, Paciente.id == ObjectId(id_paciente))
     operacion_db = await db_client.find_one(
         Solicitud_Operacion,
-        Solicitud_Operacion.fecha_solicitud == operacion.fecha_solicitud,
+        Solicitud_Operacion.paciente == paciente.id,
     )
-    
+
     if operacion_db != None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="La operacion ya existe"
@@ -67,12 +69,11 @@ async def user_operaciones(user: User = Depends(check_auth)):
     return operaciones_user
 
 
-# TODO: fix parametros
 @router.post("/operacionrealizada/{id_operacion}")
 async def operacionDone(
     id_operacion: str,
-    tiempo_real: dict,
-    descripcion: dict,
+    tiempo_real: str,
+    descripcion: str,
     user: User = Depends(check_auth),
 ):
     if user.role == "recepcionista":
@@ -98,6 +99,8 @@ async def operacionDone(
         tiempo_duracion_real=tiempo_real,
         descripcion=descripcion,
     )
+    await db_client.remove(solicitud_operacion_db)
+    await db_client.save(operacion_realizada_db)
     return operacion_realizada_db
 
 
@@ -132,9 +135,7 @@ async def operacion_urgencia(
             paciente.enabled == True
             await db_client.save(paciente)
     else:
-        paciente = Paciente(
-            name=paciente_form.name, surname=paciente_form.surname
-        )
+        paciente = Paciente(name=paciente_form.name, surname=paciente_form.surname)
         await db_client.save(paciente)
 
     operacion_urgente = Solicitud_Operacion(
@@ -146,3 +147,18 @@ async def operacion_urgencia(
     )
     await db_client.save(operacion_urgente)
     return operacion_urgente
+
+
+@router.get("/operacionesrealizadas")
+async def operaciones_realizadas(
+    fecha_inicio: str, fecha_fin: str, user: User = Depends(check_auth)
+):
+    fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+    operaciones_list = await db_client.find(
+        Operacion_Realizada,
+        (Operacion_Realizada.fecha_realizada > fecha_inicio)
+        & (Operacion_Realizada.fecha_realizada < fecha_fin),
+    )
+
+    return operaciones_list
