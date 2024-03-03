@@ -33,7 +33,7 @@ async def add_user(user: User, user_auth: User = Depends(check_auth)):
 async def all_users(user: User = Depends(check_auth)):
     if user.role != "director":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario no autorizado")
-    users = await db_client.find(User, User.enabled == True)
+    users = await db_client.find(User)
     password_free_all(users)
     return users
 
