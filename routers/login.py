@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Request
-from main import User, db_client
+from main import db_client
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
+from db.models.user import User
 
 
 ALGORITHM = "HS256"

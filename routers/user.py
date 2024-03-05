@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from odmantic import ObjectId
-from main import db_client, User
+from main import db_client
 from passlib.context import CryptContext
 from middleware.check_auth import check_auth
 from db.schemas.password_free_models import password_free, password_free_all
-
+from db.models.user import User
 
 router = APIRouter(prefix="/user", tags=["user"])
 crypth = CryptContext(schemes=["bcrypt"])

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from db.models.user import User
+from db.models.cama_sala import Cama,Sala
 from db.client import db_client
 from routers import login, user, paciente, operacion
 from passlib.context import CryptContext
@@ -25,3 +25,6 @@ app.include_router(login.router)
 app.include_router(user.router)
 app.include_router(paciente.router)
 app.include_router(operacion.router)
+
+
+
