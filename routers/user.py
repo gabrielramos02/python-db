@@ -16,7 +16,7 @@ async def add_user(user: User, user_auth: User = Depends(check_auth)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    userdb = await db_client.find_one(User, (User.username == user.username)& (User.enabled ==True))
+    userdb = await db_client.find_one(User, (User.username == user.username))
     if userdb != None:
         if not (userdb.enabled):
             userdb.enabled=True
