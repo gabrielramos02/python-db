@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from db.models.cama_sala import Cama,Sala
 from db.client import db_client
+from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+from db.schemas.initial_data import valores_iniciales
 from routers import login, user, paciente, operacion
 from passlib.context import CryptContext
 
@@ -10,7 +11,18 @@ ACCESS_TOKE_DURATION = 30
 SECRET = "201d573bd7d1344d3a3bfce1550b69102fd11be3db6d379508b6cccc58ea230b"
 crypth = CryptContext(schemes=["bcrypt"])
 
-app = FastAPI(root_path="/api")
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    #Llamar initial data
+    await valores_iniciales()
+    yield
+
+
+
+
+
+
+app = FastAPI(root_path="/api",lifespan=lifespan)
 
 
 app.add_middleware(

@@ -9,6 +9,7 @@ class Sala(Model):
 class Cama(Model):
     numero:str
     ocupada: bool = False
-    paciente: Paciente = Reference(key_name="id_paciente")
     sala: Sala = Reference(key_name="id_sala")
+    if ocupada:
+        paciente: Paciente = Reference(key_name="id_paciente")
     
