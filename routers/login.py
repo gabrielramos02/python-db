@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
-from db.models.user import User
+from db.models.imports import User
 
 
 ALGORITHM = "HS256"

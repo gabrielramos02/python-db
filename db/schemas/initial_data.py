@@ -1,5 +1,5 @@
 from db.client import db_client
-from db.models.cama_sala import Cama,Sala
+from db.models.imports import Cama,Sala
 
 
 async def valores_iniciales():

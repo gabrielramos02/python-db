@@ -1,5 +1,5 @@
 # Funciones para eliminar la contrase;a al devolver usuario
-from db.models.user import User
+from db.models.imports import User
 
 def password_free(user: User) -> User:
     del user.password
