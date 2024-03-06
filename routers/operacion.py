@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from main import db_client, User
+from main import db_client
 from middleware.check_auth import check_auth
-from db.models.operacion import Operacion, Solicitud_Operacion, Operacion_Realizada
-from db.models.paciente import Paciente
 from odmantic import ObjectId, Model
 from db.schemas.password_free_models import password_free
 from datetime import datetime, date, time
+from db.models.imports import User, Operacion,Operacion_Realizada,Solicitud_Operacion,Paciente
 
 router = APIRouter(prefix="/operacion", tags=["operacion"])
 

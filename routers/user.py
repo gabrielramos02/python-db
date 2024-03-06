@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from odmantic import ObjectId
-from main import db_client, User
+from main import db_client
 from passlib.context import CryptContext
 from middleware.check_auth import check_auth
 from db.schemas.password_free_models import password_free, password_free_all
-
+from db.models.user import User
 
 router = APIRouter(prefix="/user", tags=["user"])
 crypth = CryptContext(schemes=["bcrypt"])
@@ -16,8 +16,12 @@ async def add_user(user: User, user_auth: User = Depends(check_auth)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    userdb = await db_client.find_one(User, User.username == user.username)
+    userdb = await db_client.find_one(User, (User.username == user.username))
     if userdb != None:
+        if not (userdb.enabled):
+            userdb.enabled=True
+            await db_client.save(userdb)
+            return userdb
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe"
         )
@@ -29,7 +33,7 @@ async def add_user(user: User, user_auth: User = Depends(check_auth)):
 async def all_users(user: User = Depends(check_auth)):
     if user.role != "director":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Usuario no autorizado")
-    users = await db_client.find(User, User.enabled == True)
+    users = await db_client.find(User)
     password_free_all(users)
     return users
 

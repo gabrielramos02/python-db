@@ -1,10 +1,11 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer,SecurityScopes
-from main import db_client, User
+from main import db_client
 from jose import jwt, JWTError
 from odmantic import ObjectId
 from db.schemas.password_free_models import password_free, password_free_all
+from db.models.imports import User
 
 ALGORITHM = "HS256"
 ACCESS_TOKE_DURATION = 30

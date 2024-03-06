@@ -1,8 +1,7 @@
 from typing import Optional
 from odmantic import Model, Reference, Field
-from db.models.user import User
-from db.models.paciente import Paciente
 from datetime import datetime,time
+from db.models.imports import User,Paciente
 
 
 class Operacion(Model):
