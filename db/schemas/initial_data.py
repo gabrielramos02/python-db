@@ -1,9 +1,16 @@
 from db.client import db_client
-from db.models.imports import Cama,Sala
+from db.models.imports import Cama,Sala,User
+from passlib.context import CryptContext
+
+crypth = CryptContext(schemes=["bcrypt"])
 
 
 async def valores_iniciales():
     salas_existe = await db_client.find(Sala)
+    director_existe = await db_client.find(User)
+    if director_existe.__len__ == 0:
+        director = User(username="director",password=crypth.encrypt("director"),role="director")
+        await db_client.save(director)
     if salas_existe.__len__() != 0 :
         return
     salas = []
