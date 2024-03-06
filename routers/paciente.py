@@ -2,7 +2,9 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from middleware.check_auth import check_auth
 from main import db_client
 from odmantic import ObjectId
-from db.models.imports import Paciente,User,Solicitud_Operacion
+from db.models.imports import Paciente, User, Solicitud_Operacion, PacienteForm, Cama
+from db.schemas.obtener_cama import obtener_cama
+
 
 router = APIRouter(prefix="/paciente", tags=["paciente"])
 
@@ -40,12 +42,18 @@ async def eliminar(historia_clinica: str, user_auth: User = Depends(check_auth))
     await db_client.remove(
         Solicitud_Operacion, Solicitud_Operacion.paciente == paciente.id
     )
-    await db_client.save(paciente)
-    return paciente
+    cama = await db_client.find_one(Cama, Cama.paciente == paciente.id)
+    cama.ocupada = False
+    cama.paciente = None
+    paciente.cama = cama
+   
+    paciente_db = await db_client.save(paciente)
+    
+    return paciente_db
 
 
 @router.post("/")
-async def add_paciente(paciente: Paciente, user_auth: User = Depends(check_auth)):
+async def add_paciente(paciente: PacienteForm, user_auth: User = Depends(check_auth)):
     if user_auth.role == "medico":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
@@ -53,16 +61,28 @@ async def add_paciente(paciente: Paciente, user_auth: User = Depends(check_auth)
     paciente_db = await db_client.find_one(
         Paciente, (Paciente.historia_clinica == paciente.historia_clinica)
     )
+    cama = await obtener_cama(paciente.cama, paciente.sala)
     if paciente_db != None:
         if not (paciente_db.enabled):
-            paciente_db.enabled == True
+            paciente_db.enabled = True
+            cama.ocupada = True
+            cama.paciente = paciente_db.id
+            paciente_db.cama = cama
             await db_client.save(paciente_db)
             return paciente_db
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El paciente ya existe"
         )
-    await db_client.save(paciente)
-    return paciente
+    paciente_db = Paciente(
+        name=paciente.name,
+        surname=paciente.surname,
+        historia_clinica=paciente.historia_clinica,
+        cama=cama,
+    )
+    cama.ocupada = True
+    cama.paciente = paciente_db.id
+    await db_client.save(paciente_db)
+    return paciente_db
 
 
 @router.get("/busqueda/{historia_clinica}")

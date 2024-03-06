@@ -8,6 +8,5 @@ class Cama(Model):
     numero:str
     ocupada: bool = False
     sala: Sala = Reference(key_name="id_sala")
-    if ocupada:
-        paciente: ObjectId
+    paciente: Optional[ObjectId] = None
     

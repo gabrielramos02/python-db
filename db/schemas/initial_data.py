@@ -13,7 +13,7 @@ async def valores_iniciales():
         salas.append(sala)
         camas = []
         for cama_actual in range(1,11):
-            cama = Cama(numero=str(cama_actual),paciente={},sala=sala)
+            cama = Cama(numero=str(cama_actual),paciente=None,sala=sala)
             camas.append(cama)
             await db_client.save_all(camas)
     await db_client.save_all(salas)

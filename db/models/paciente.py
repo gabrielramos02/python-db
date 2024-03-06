@@ -19,4 +19,3 @@ class PacienteForm(Model):
     historia_clinica: Optional[str] = None
     cama: Optional[str] = None
     sala: Optional[str] = None
-
