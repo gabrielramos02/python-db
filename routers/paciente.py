@@ -4,7 +4,7 @@ from main import db_client
 from odmantic import ObjectId
 from db.models.imports import Paciente, User, Solicitud_Operacion, PacienteForm, Cama
 from db.schemas.obtener_cama import obtener_cama
-
+from datetime import datetime
 
 router = APIRouter(prefix="/paciente", tags=["paciente"])
 
@@ -46,9 +46,9 @@ async def eliminar(historia_clinica: str, user_auth: User = Depends(check_auth))
     cama.ocupada = False
     cama.paciente = None
     paciente.cama = cama
-   
+
     paciente_db = await db_client.save(paciente)
-    
+
     return paciente_db
 
 
@@ -101,3 +101,23 @@ async def get_paciente(historia_clinica: str, user_auth: User = Depends(check_au
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="No existe ningun paciente con esa historia clinica",
     )
+
+
+@router.get("/")
+async def get_pacientes_por_fecha(
+    fecha_inicio: str, fecha_fin: str, user: User = Depends(check_auth)
+):
+    if user.role != "director":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+    fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+    pacientes = await db_client.find(
+        Paciente,
+        (Paciente.fecha_ingreso > fecha_inicio) & (Paciente.fecha_ingreso < fecha_fin),
+    )
+    if pacientes.__len__() == 0:
+        return {"msg": "No hay pacientes"}
+    return pacientes
+
