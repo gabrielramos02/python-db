@@ -4,7 +4,7 @@ from middleware.check_auth import check_auth
 from odmantic import ObjectId, Model
 from db.schemas.password_free_models import password_free
 from datetime import datetime, date, time
-from db.models.imports import User, Operacion,Operacion_Realizada,Solicitud_Operacion,Paciente
+from db.models.imports import User, Operacion,Operacion_Realizada,Solicitud_Operacion,Paciente,PacienteForm,Cama
 
 router = APIRouter(prefix="/operacion", tags=["operacion"])
 
@@ -116,7 +116,7 @@ async def get_operacion(idpaciente: str, user: User = Depends(check_auth)):
 
 @router.post("/urgencia")
 async def operacion_urgencia(
-    operacion: Operacion, paciente_form: Paciente, user: User = Depends(check_auth)
+    operacion: Operacion, paciente_form: PacienteForm, user: User = Depends(check_auth)
 ):
     if user.role == "recepcionista":
         raise HTTPException(
@@ -128,13 +128,14 @@ async def operacion_urgencia(
         (Paciente.name == paciente_form.name)
         & (Paciente.surname == paciente_form.surname),
     )
+    cama_vacia = await db_client.find_one(Cama,Cama.numero == "vacia")
 
     if paciente != None:
         if not (paciente.enabled):
             paciente.enabled == True
             await db_client.save(paciente)
     else:
-        paciente = Paciente(name=paciente_form.name, surname=paciente_form.surname)
+        paciente = Paciente(name=paciente_form.name, surname=paciente_form.surname,cama=cama_vacia)
         await db_client.save(paciente)
 
     operacion_urgente = Solicitud_Operacion(
