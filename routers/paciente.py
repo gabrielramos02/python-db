@@ -11,7 +11,7 @@ router = APIRouter(prefix="/paciente", tags=["paciente"])
 
 @router.get("/all")
 async def all_pacientes(user: User = Depends(check_auth)):
-    if user.role != "director":
+    if user.role == "recepcionista":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
