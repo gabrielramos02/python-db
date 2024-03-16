@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from db.schemas.initial_data import valores_iniciales
 from routers import login, user, paciente, operacion, cama_sala
 from passlib.context import CryptContext
+from util.planificar_operacion import llamar_planificacion
 
 
 ALGORITHM = "HS256"
@@ -17,6 +18,7 @@ crypth = CryptContext(schemes=["bcrypt"])
 async def lifespan(app: FastAPI):
     # Llamar initial data
     await valores_iniciales()
+    llamar_planificacion()
     yield
 
 
