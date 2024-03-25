@@ -89,15 +89,15 @@ async def operacionDone(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-
+    
     solicitud_operacion_db = await db_client.find_one(
         Solicitud_Operacion, Solicitud_Operacion.id == ObjectId(id_operacion)
     )
-    planificacion = await db_client.find(Operacion_Planificada,Operacion_Planificada.solicitud_operacion == solicitud_operacion_db)
-
+    planificacion = await db_client.find_one(Operacion_Planificada,Operacion_Planificada.solicitud_operacion == solicitud_operacion_db.id)
     if solicitud_operacion_db == None:
+
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="La soliciud no existe"
+            status_code=status.HTTP_404_NOT_FOUND, detail="La solicitud no existe"
         )
 
     operacion_realizada_db = Operacion_Realizada(
@@ -111,7 +111,8 @@ async def operacionDone(
         descripcion=descripcion,
     )
     await db_client.remove(solicitud_operacion_db)
-    await db_client.remove(planificacion)
+    if planificacion !=None:
+        await db_client.remove(planificacion)
     await db_client.save(operacion_realizada_db)
     return operacion_realizada_db
 

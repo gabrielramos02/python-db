@@ -5,7 +5,7 @@ from main import db_client
 from datetime import datetime,timedelta
 
 
-@repeat_at(cron="59 * * * *")
+@repeat_at(cron="* 3 * * *")
 async def llamar_planificacion():
     await planificar_operacion()
 
