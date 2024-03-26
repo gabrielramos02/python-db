@@ -4,3 +4,4 @@ passlib
 python-jose
 uvicorn
 python-multipart
+fastapi_utilities
