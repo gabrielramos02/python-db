@@ -188,7 +188,7 @@ async def operaciones_ultimo_mes(user: User = Depends(check_auth)):
 
     operaciones_urgencia = await db_client.find(
         Operacion_Realizada,
-        (Operacion_Realizada.clasificacion == "regular")
+        (Operacion_Realizada.clasificacion == "urgencia")
         & (Operacion_Realizada.fecha_realizada > fecha_mes_anterior),
     )
     return operaciones_urgencia
