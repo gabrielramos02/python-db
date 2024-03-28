@@ -113,7 +113,7 @@ async def operacionDone(
         tiempo_duracion_real=tiempo_real,
         descripcion=descripcion,
     )
-    await db_client.remove(solicitud_operacion_db)
+    await db_client.delete(solicitud_operacion_db)
     if planificacion != None:
         await db_client.remove(planificacion)
     await db_client.save(operacion_realizada_db)
