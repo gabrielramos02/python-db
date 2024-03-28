@@ -21,35 +21,41 @@ async def all_pacientes(user: User = Depends(check_auth)):
     return pacientes
 
 
-@router.put(
-    "/busqueda/{historia_clinica}",
-)
-async def eliminar(historia_clinica: str, user_auth: User = Depends(check_auth)):
+@router.get("/{id}")
+async def get_paciente(id: str, user_auth: User = Depends(check_auth)):
     if user_auth.role == "recepcionista":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente = await db_client.find_one(
-        Paciente, Paciente.historia_clinica == historia_clinica
+    paciente_db = await db_client.find_one(
+        Paciente,
+        (Paciente.id == ObjectId(id)) & (Paciente.enabled == True),
+    )
+    if paciente_db != None and paciente_db.enabled:
+        return paciente_db
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="No existe ningun paciente con esa historia clinica",
     )
 
-    if paciente == None or not (paciente.enabled):
+
+@router.get("/")
+async def get_pacientes_por_fecha(
+    fecha_inicio: str, fecha_fin: str, user: User = Depends(check_auth)
+):
+    if user.role != "director":
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No existe paciente con esa historia clinica",
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente.enabled = False
-    await db_client.remove(
-        Solicitud_Operacion, Solicitud_Operacion.paciente == paciente.id
+    fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+    pacientes = await db_client.find(
+        Paciente,
+        (Paciente.fecha_ingreso > fecha_inicio) & (Paciente.fecha_ingreso < fecha_fin),
     )
-    cama = await db_client.find_one(Cama, Cama.paciente == paciente.id)
-    cama.ocupada = False
-    cama.paciente = None
-    paciente.cama = cama
-
-    paciente_db = await db_client.save(paciente)
-
-    return paciente_db
+    if pacientes.__len__() == 0:
+        return {"msg": "No hay pacientes"}
+    return pacientes
 
 
 @router.post("/")
@@ -85,39 +91,32 @@ async def add_paciente(paciente: PacienteForm, user_auth: User = Depends(check_a
     return paciente_db
 
 
-@router.get("/busqueda/{historia_clinica}")
-async def get_paciente(historia_clinica: str, user_auth: User = Depends(check_auth)):
+@router.put(
+    "/{id}",
+)
+async def eliminar(id: str, user_auth: User = Depends(check_auth)):
     if user_auth.role == "recepcionista":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    paciente_db = await db_client.find_one(
-        Paciente,
-        (Paciente.historia_clinica == historia_clinica) & (Paciente.enabled == True),
-    )
-    if paciente_db != None and paciente_db.enabled:
-        return paciente_db
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="No existe ningun paciente con esa historia clinica",
+    paciente = await db_client.find_one(
+        Paciente, Paciente.id == ObjectId(id)
     )
 
-
-@router.get("/")
-async def get_pacientes_por_fecha(
-    fecha_inicio: str, fecha_fin: str, user: User = Depends(check_auth)
-):
-    if user.role != "director":
+    if paciente == None or not (paciente.enabled):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe paciente con esa historia clinica",
         )
-    fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
-    fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
-    pacientes = await db_client.find(
-        Paciente,
-        (Paciente.fecha_ingreso > fecha_inicio) & (Paciente.fecha_ingreso < fecha_fin),
+    paciente.enabled = False
+    await db_client.remove(
+        Solicitud_Operacion, Solicitud_Operacion.paciente == paciente.id
     )
-    if pacientes.__len__() == 0:
-        return {"msg": "No hay pacientes"}
-    return pacientes
+    cama = await db_client.find_one(Cama, Cama.paciente == paciente.id)
+    cama.ocupada = False
+    cama.paciente = None
+    paciente.cama = cama
 
+    paciente_db = await db_client.save(paciente)
+
+    return paciente_db

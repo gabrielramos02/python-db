@@ -31,6 +31,22 @@ async def all_operaciones(user: User = Depends(check_auth)):
     return operaciones
 
 
+@router.get("/me")
+async def user_operaciones(user: User = Depends(check_auth)):
+    if user.role == "recepcionista":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+    operaciones = await db_client.find(Solicitud_Operacion)
+    operaciones_user = []
+    for operacion in operaciones:
+
+        user_new = password_free(operacion.encargado)
+        if user_new == user:
+            operaciones_user.append(operacion)
+    return operaciones_user
+
+
 @router.post("/addoperacion/{id_paciente}")
 async def add_operacion(
     operacion: Operacion, id_paciente: str, user: User = Depends(check_auth)
@@ -62,22 +78,6 @@ async def add_operacion(
     return solicitud_operacion
 
 
-@router.get("/me")
-async def user_operaciones(user: User = Depends(check_auth)):
-    if user.role == "recepcionista":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
-        )
-    operaciones = await db_client.find(Solicitud_Operacion)
-    operaciones_user = []
-    for operacion in operaciones:
-
-        user_new = password_free(operacion.encargado)
-        if user_new == user:
-            operaciones_user.append(operacion)
-    return operaciones_user
-
-
 @router.post("/operacionrealizada/{id_operacion}")
 async def operacionDone(
     id_operacion: str,
@@ -89,11 +89,14 @@ async def operacionDone(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
         )
-    
+
     solicitud_operacion_db = await db_client.find_one(
         Solicitud_Operacion, Solicitud_Operacion.id == ObjectId(id_operacion)
     )
-    planificacion = await db_client.find_one(Operacion_Planificada,Operacion_Planificada.solicitud_operacion == solicitud_operacion_db.id)
+    planificacion = await db_client.find_one(
+        Operacion_Planificada,
+        Operacion_Planificada.solicitud_operacion == solicitud_operacion_db.id,
+    )
     if solicitud_operacion_db == None:
 
         raise HTTPException(
@@ -110,22 +113,11 @@ async def operacionDone(
         tiempo_duracion_real=tiempo_real,
         descripcion=descripcion,
     )
-    await db_client.remove(solicitud_operacion_db)
-    if planificacion !=None:
+    await db_client.delete(solicitud_operacion_db)
+    if planificacion != None:
         await db_client.remove(planificacion)
     await db_client.save(operacion_realizada_db)
     return operacion_realizada_db
-
-
-@router.get("/busqueda/{id_paciente}")
-async def get_operacion(idpaciente: str, user: User = Depends(check_auth)):
-    if user.role == "recepcionista":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
-        )
-    operacion_db = await db_client.find_one(
-        Solicitud_Operacion, Solicitud_Operacion.id == ObjectId(idpaciente)
-    )
 
 
 @router.post("/urgencia", tags=["urgencias"])
@@ -184,8 +176,26 @@ async def operaciones_realizadas(
     return operaciones_list
 
 
+@router.get("/operacionesultimomes", tags=["urgencias"])
+async def operaciones_ultimo_mes(user: User = Depends(check_auth)):
+    if user.role != "director":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
+        )
+    fecha_mes_anterior = datetime.today()
+
+    fecha_mes_anterior = fecha_mes_anterior.replace(day=(fecha_mes_anterior.month - 1))
+
+    operaciones_urgencia = await db_client.find(
+        Operacion_Realizada,
+        (Operacion_Realizada.clasificacion == "regular")
+        & (Operacion_Realizada.fecha_realizada > fecha_mes_anterior),
+    )
+    return operaciones_urgencia
+
+
 @router.get("/operacionesplanificadas/all", tags=["planificadas"])
-async def operacionesplanificadas(user: User = Depends(check_auth)):
+async def operaciones_planificadas_all(user: User = Depends(check_auth)):
     if user.role != "director":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
@@ -195,7 +205,7 @@ async def operacionesplanificadas(user: User = Depends(check_auth)):
 
 
 @router.get("/operacionesplanificadas/", tags=["planificadas"])
-async def operacionesplanificadas(user: User = Depends(check_auth)):
+async def operaciones_planificadas(user: User = Depends(check_auth)):
     if user.role == "recepcionista":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
@@ -211,21 +221,3 @@ async def operacionesplanificadas(user: User = Depends(check_auth)):
                 operaciones_me.append(operacion)
 
     return operaciones_me
-
-
-@router.get("/operacionesultimomes", tags=["urgencias"])
-async def operacionesultimomes(user: User = Depends(check_auth)):
-    if user.role != "director":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no Autorizado"
-        )
-    fecha_mes_anterior = datetime.today()
-
-    fecha_mes_anterior = fecha_mes_anterior.replace(day=(fecha_mes_anterior.month - 1))
-
-    operaciones_urgencia = await db_client.find(
-        Operacion_Realizada,
-        (Operacion_Realizada.clasificacion == "regular")
-        & (Operacion_Realizada.fecha_realizada > fecha_mes_anterior),
-    )
-    return operaciones_urgencia
