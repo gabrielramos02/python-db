@@ -8,7 +8,7 @@ crypth = CryptContext(schemes=["bcrypt"])
 async def valores_iniciales():
     salas_existe = await db_client.find(Sala)
     director_existe = await db_client.find(User)
-    if director_existe.__len__ == 0:
+    if director_existe.__len__() == 0:
         director = User(
             username="director", password=crypth.encrypt("director"), role="director"
         )
